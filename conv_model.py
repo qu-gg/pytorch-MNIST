@@ -20,6 +20,7 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=64)
 
 
 class Net(nn.Module):
+    # Size of a batch being fed into the network
     batch_size = 64
 
     def __init__(self):
@@ -105,16 +106,31 @@ def test_net():
 
 
 def save_net(model):
+    """
+    Function to save the model at any current stage
+    :param model: model to save
+    :return: None
+    """
     print("Saving net...", end="")
     torch.save(model, "./model")
     print("...complete!")
 
 
 def set_batch(num):
+    """
+    Function to set the batch size and layer sizes
+    :param num: Batch size
+    :return: None
+    """
     setattr(net, "batch_size", num)
 
 
 def use_net():
+    """
+    Function that takes an input file, preprocesses the data, and feeds it into the
+    network for a prediction
+    :return: None
+    """
     net = torch.load("./model")
     with torch.no_grad():
         while True:
@@ -123,7 +139,7 @@ def use_net():
             if path == "q":
                 break
 
-            # create the image array
+            # create the image array and size it as a Torch tensor
             image = misc.imread(path)
             image_rgb_raw = [[] for _ in range(28)]
 
