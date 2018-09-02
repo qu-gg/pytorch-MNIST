@@ -45,14 +45,13 @@ class Generator(nn.Module):
         return x
 
 
-def generate_img():
+def generate_img(gen):
     """
     Simple function that generates a randomized vector of 100 values between [-1,1]
     and passes it into the generator.
     :return: A single generated image
     """
     noise = torch.randn(1, 100)
-    gen = Generator()
     image = gen(noise)
     image = image.view(28, 28)
     image = image.detach()
@@ -60,5 +59,20 @@ def generate_img():
     return image
 
 
-generate_img()
+generate_img(Generator())
+
+
+class Discriminator(nn.Module):
+    def __init__(self):
+        super(Discriminator, self).__init__()
+
+        self.conv1 = nn.Conv2d(1, 128, kernel_size=4, stride=2)
+        self.conv2 = nn.Conv2d(56, 28, kernel_size=4, stride=2)
+        self.conv3 = nn.Conv2d(28, 100, kernel_size=4)
+        self.fc = nn.Linear(100, 1)
+
+    def forward(self):
+        return
+
+
 
