@@ -45,7 +45,7 @@ class Generator(nn.Module):
         return x
 
 
-def generate_img(gen):
+def generate_img(gen, show=False):
     """
     Simple function that generates a randomized vector of 100 values between [-1,1]
     and passes it into the generator.
@@ -53,9 +53,9 @@ def generate_img(gen):
     """
     noise = torch.randn(1, 100)
     image = gen(noise)
-    image = image.view(28, 28)
-    image = image.detach()
-    misc.toimage(image).show()
+    if show:
+        reshaped = image.view(28, 28).detach()
+        misc.toimage(reshaped).show()
     return image
 
 
@@ -67,12 +67,24 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         self.conv1 = nn.Conv2d(1, 128, kernel_size=4, stride=2)
-        self.conv2 = nn.Conv2d(56, 28, kernel_size=4, stride=2)
-        self.conv3 = nn.Conv2d(28, 100, kernel_size=4)
+        self.conv2 = nn.Conv2d(128, 56, kernel_size=4, stride=2)
+        self.conv3 = nn.Conv2d(56, 100, kernel_size=4)
         self.fc = nn.Linear(100, 1)
 
-    def forward(self):
-        return
+    def forward(self, x):
+        x = f.leaky_relu(self.conv1(x))
+        x = f.leaky_relu(self.conv2(x))
+        x = f.leaky_relu(self.conv3(x))
+        x = x.view(-1, 100)
+        x = torch.sigmoid(self.fc(x))
+        print(x.size())
+        return x
 
+
+image = generate_img(Generator(), True)
+print(image)
+discrim = Discriminator()
+pred = discrim(image)
+print(pred)
 
 
