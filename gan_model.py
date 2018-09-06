@@ -26,9 +26,9 @@ class Generator(nn.Module):
         """
         super(Generator, self).__init__()
 
-        self.conv1 = nn.ConvTranspose2d(100, 128, kernel_size=7, stride=2)
+        self.conv1 = nn.ConvTranspose2d(100, 128, kernel_size=5, stride=2)
         self.bn1 = nn.BatchNorm2d(128)
-        self.conv2 = nn.ConvTranspose2d(128, 56, kernel_size=4, stride=2)
+        self.conv2 = nn.ConvTranspose2d(128, 56, kernel_size=5, stride=2)
         self.conv3 = nn.ConvTranspose2d(56, 28, kernel_size=4, stride=2)
         self.conv4 = nn.ConvTranspose2d(28, 1, kernel_size=1, stride=1)
 
@@ -47,15 +47,15 @@ class Generator(nn.Module):
         return x
 
 
-def generate_img(gen, num_images, show=False):
+def generate_img(gen, show=False):
     """
     Simple function that generates a randomized vector of 100 values between [-1,1]
     and passes it into the generator for a specified number of images.
     :return: A batch of generated images
     """
-    noise = torch.rand(num_images, 100)
+    noise = torch.rand(1, 100)
     image = gen(noise)
-    if show and num_images == 1:
+    if show:
         reshaped = image.view(28, 28).detach()
         misc.toimage(reshaped).show()
     return image
@@ -80,9 +80,16 @@ class Discriminator(nn.Module):
 
 
 gen = Generator()
-images = generate_img(gen, 50)
-print(images[0:10])
-discrim = Discriminator()
+images = []
+for _ in range(50):
+    img = generate_img(gen).detach().numpy()
+    images.append(img[0])
+
+images = np.asarray(images, dtype=np.double)
+images = torch.from_numpy(images)
+
+print(images)
+discrim = Discriminator().double()
 pred = discrim(images)
 print(pred)
 
