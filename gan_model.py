@@ -102,13 +102,45 @@ class Discriminator(nn.Module):
 gen = Generator()
 discrim = Discriminator()
 
-batch, labels = get_batch(gen, 2)
-print(labels)
-pred = discrim(batch)
-print(pred)
+# Loss
+cross_entopy = nn.CrossEntropyLoss()
+
+# Optimizer
+dis_optim = optim.Adam(discrim.parameters(), lr=.001)
+gen_optim = optim.Adam(gen.parameters(), lr=.001)
 
 
 def training():
-    return
+    """
+    Function to handle the training of the GAN
+    :return: None
+    """
+    for epoch in range(100):
+        for i, data in enumerate(trainloader, 0):
+            # Zero grad
+            dis_optim.zero_grad()
+            gen_optim.zero_grad()
 
+            # Prob for Fake Images
+            gen_batch, gen_labels = get_batch(gen, 64)
+            dis_fake = discrim(gen_batch).detach().numpy()
 
+            # Prob for Real Images
+            images, _ = data
+            labels = [random.uniform(0.0, 0.3) for _ in range(64)]
+            dis_real = discrim(images).detach().numpy()
+
+            # Loss
+            dis_loss = cross_entopy(dis_real, labels)
+            gen_loss = cross_entopy(dis_fake, gen_labels)
+
+            dis_loss.backward()
+            gen_loss.backward()
+
+            #Optimizer step
+            dis_optim.step()
+            gen_optim.step()
+
+            if i % 100 == 0:
+                print("Discrim Loss on ", i, ": ", dis_loss)
+                print("Gen Loss on ", i, ": ", gen_loss)
