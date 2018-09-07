@@ -47,18 +47,33 @@ class Generator(nn.Module):
         return x
 
 
-def generate_img(gen, show=False):
+def generate_img(gen, noise, show=False):
     """
     Simple function that generates a randomized vector of 100 values between [-1,1]
     and passes it into the generator for a specified number of images.
     :return: A batch of generated images
     """
-    noise = torch.rand(1, 100)
     image = gen(noise)
     if show:
         reshaped = image.view(28, 28).detach()
         misc.toimage(reshaped).show()
     return image
+
+
+def get_batch(gen, num):
+    """
+    Function to generate a batch of fake images
+    :param gen: Generator to use
+    :param num: Number of images in batch
+    :return: Tensor of generated images
+    """
+    images = []
+    for _ in range(num):
+        noise = torch.randn(1, 100)
+        img = generate_img(gen, noise)
+        images.append(img)
+
+    return torch.cat(images)
 
 
 class Discriminator(nn.Module):
@@ -71,7 +86,7 @@ class Discriminator(nn.Module):
         self.fc = nn.Linear(100, 1)
 
     def forward(self, x):
-        x = f.leaky_relu(self.conv1(x))
+        x = self.conv1(x)
         x = f.leaky_relu(self.conv2(x))
         x = f.leaky_relu(self.conv3(x))
         x = x.view(-1, 100)
@@ -80,18 +95,14 @@ class Discriminator(nn.Module):
 
 
 gen = Generator()
-images = []
-for _ in range(50):
-    img = generate_img(gen).detach().numpy()
-    images.append(img[0])
+discrim = Discriminator()
 
-images = np.asarray(images, dtype=np.double)
-images = torch.from_numpy(images)
-
-print(images)
-discrim = Discriminator().double()
-pred = discrim(images)
+batch = get_batch(gen, 50)
+pred = discrim()
 print(pred)
 
+
+def training():
+    return
 
 
