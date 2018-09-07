@@ -6,6 +6,7 @@ import torchvision
 import torchvision.transforms as transforms
 from scipy import misc
 import numpy as np
+import random
 
 # Datasets
 trainset = torchvision.datasets.MNIST(root="./data", train=True,
@@ -39,8 +40,8 @@ class Generator(nn.Module):
         :return: Matrix of [-1, 1, 28, 28]
         """
         x = x.view(-1, 100, 1, 1)
-        x = f.leaky_relu(self.bn1(self.conv1(x)))
-        x = f.leaky_relu(self.conv2(x))
+        x = self.bn1(self.conv1(x))
+        x = self.conv2(x)
         x = f.leaky_relu(self.conv3(x))
         x = f.leaky_relu(self.conv4(x))
         x = torch.tanh(x)
@@ -67,13 +68,17 @@ def get_batch(gen, num):
     :param num: Number of images in batch
     :return: Tensor of generated images
     """
+    classes = []
+    for _ in range(num):
+        classes.append(random.uniform(0.7, 1.2))
+
     images = []
     for _ in range(num):
         noise = torch.randn(1, 100)
         img = generate_img(gen, noise)
         images.append(img)
 
-    return torch.cat(images)
+    return torch.cat(images), torch.Tensor(classes)
 
 
 class Discriminator(nn.Module):
@@ -97,8 +102,9 @@ class Discriminator(nn.Module):
 gen = Generator()
 discrim = Discriminator()
 
-batch = get_batch(gen, 50)
-pred = discrim()
+batch, labels = get_batch(gen, 2)
+print(labels)
+pred = discrim(batch)
 print(pred)
 
 
