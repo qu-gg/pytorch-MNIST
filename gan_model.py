@@ -42,8 +42,8 @@ class Generator(nn.Module):
         x = x.view(-1, 100, 1, 1)
         x = self.bn1(self.conv1(x))
         x = self.conv2(x)
-        x = f.leaky_relu(self.conv3(x))
-        x = f.leaky_relu(self.conv4(x))
+        x = f.elu(self.conv3(x))
+        x = f.elu(self.conv4(x))
         x = torch.tanh(x)
         return x
 
@@ -68,9 +68,7 @@ def get_batch(gen, num):
     :param num: Number of images in batch
     :return: Tensor of generated images
     """
-    classes = []
-    for _ in range(num):
-        classes.append(random.uniform(0.7, 1.0))
+    classes = [np.random.uniform(0.8, 1.2) for _ in range(num)]
 
     images = []
     for _ in range(num):
@@ -92,8 +90,8 @@ class Discriminator(nn.Module):
 
     def forward(self, x):
         x = self.conv1(x)
-        x = f.leaky_relu(self.conv2(x))
-        x = f.leaky_relu(self.conv3(x))
+        x = f.elu(self.conv2(x))
+        x = f.elu(self.conv3(x))
         x = x.view(-1, 100)
         x = torch.sigmoid(self.fc(x))
         return x
@@ -106,8 +104,8 @@ discrim = Discriminator()
 cross_entropy = nn.BCELoss()
 
 # Optimizer
-dis_optim = optim.Adam(discrim.parameters(), lr=.002)
-gen_optim = optim.Adam(gen.parameters(), lr=.002)
+dis_optim = optim.Adam(discrim.parameters(), lr=.00005)
+gen_optim = optim.Adam(gen.parameters(), lr=.00005)
 
 
 def training(num_epochs, num_steps):
@@ -117,11 +115,12 @@ def training(num_epochs, num_steps):
     """
     for epoch in range(num_epochs):
         for i in range(num_steps):
+            # Zero grad
             dis_optim.zero_grad()
 
             # Train on real
             images, _ = next(iter(trainloader))
-            labels = torch.Tensor([random.uniform(0.0, 0.3) for _ in range(64)])
+            labels = torch.Tensor([np.random.uniform(0.0, 0.2) for _ in range(64)])
             dis_real = discrim(images)
             dis_real_loss = cross_entropy(dis_real, labels)
             dis_real_loss.backward()
@@ -132,20 +131,20 @@ def training(num_epochs, num_steps):
             dis_fake_loss = cross_entropy(dis_fake, gen_labels)
             dis_fake_loss.backward()
 
-            dis_optim.step()
+            if dis_fake_loss.detach().numpy() > .5:
+                dis_optim.step()
 
             if i % 10 == 0:
                 print("Discrim loss on {}: {}".format(i, dis_fake_loss.detach().numpy()))
 
-        for i in range(num_steps):
+        for i in range(num_steps*2):
             # Zero grad
             gen_optim.zero_grad()
 
             gen_batch, gen_labels = get_batch(gen, 64)
             dis_pred = discrim(gen_batch)
-            gen_loss = cross_entropy(dis_pred, gen_labels)
+            gen_loss = -cross_entropy(dis_pred, gen_labels)
             gen_loss.backward()
-
             gen_optim.step()
 
             if i % 10 == 0:
@@ -155,4 +154,4 @@ def training(num_epochs, num_steps):
                 misc.imsave("results/{}epoch{}num.jpg".format(epoch, i), image)
 
 
-training(10, 100)
+training(10, 50)
