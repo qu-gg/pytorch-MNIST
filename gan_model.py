@@ -78,7 +78,7 @@ def get_batch(gen, num):
         img = generate_img(gen, noise)
         images.append(img)
 
-    return torch.cat(images), torch.Tensor(classes).long()
+    return torch.cat(images), torch.Tensor(classes)
 
 
 class Discriminator(nn.Module):
@@ -103,49 +103,56 @@ gen = Generator()
 discrim = Discriminator()
 
 # Loss
-cross_entropy = nn.CrossEntropyLoss()
+cross_entropy = nn.BCELoss()
 
 # Optimizer
-dis_optim = optim.Adam(discrim.parameters(), lr=.001)
-gen_optim = optim.Adam(gen.parameters(), lr=.001)
+dis_optim = optim.Adam(discrim.parameters(), lr=.002)
+gen_optim = optim.Adam(gen.parameters(), lr=.002)
 
 
-def training(num_epochs):
+def training(num_epochs, num_steps):
     """
     Function to handle the training of the GAN
     :return: None
     """
     for epoch in range(num_epochs):
-        for i, data in enumerate(trainloader, 0):
-            # Zero grad
+        for i in range(num_steps):
             dis_optim.zero_grad()
-            gen_optim.zero_grad()
+
+            # Train on real
+            images, _ = next(iter(trainloader))
+            labels = torch.Tensor([random.uniform(0.0, 0.3) for _ in range(64)])
+            dis_real = discrim(images)
+            dis_real_loss = cross_entropy(dis_real, labels)
+            dis_real_loss.backward()
 
             # Prob for Fake Images
             gen_batch, gen_labels = get_batch(gen, 64)
             dis_fake = discrim(gen_batch)
+            dis_fake_loss = cross_entropy(dis_fake, gen_labels)
+            dis_fake_loss.backward()
 
-            # Prob for Real Images
-            images, _ = data
-            labels = torch.Tensor([random.uniform(0.0, 0.3) for _ in range(64)]).long()
-            dis_real = discrim(images)
+            dis_optim.step()
 
-            # Loss
-            dis_loss = cross_entropy(dis_real, labels)
-            gen_loss = cross_entropy(dis_fake, gen_labels)
+            if i % 10 == 0:
+                print("Discrim loss on {}: {}".format(i, dis_fake_loss.detach().numpy()))
 
-            dis_loss.backward()
+        for i in range(num_steps):
+            # Zero grad
+            gen_optim.zero_grad()
+
+            gen_batch, gen_labels = get_batch(gen, 64)
+            dis_pred = discrim(gen_batch)
+            gen_loss = cross_entropy(dis_pred, gen_labels)
             gen_loss.backward()
 
-            # Optimizer step
-            dis_optim.step()
             gen_optim.step()
 
             if i % 10 == 0:
-                print("Discrim Loss on ", i, ": ", dis_loss.detach().numpy())
-                print("Gen Loss on ", i, ": ", gen_loss.detach().numpy())
+                print("Genera Loss on {}: {}".format(i, gen_loss.detach().numpy()))
                 noise = torch.randn(1, 100)
                 image = generate_img(gen, noise, True)
-                misc.imsave("results/" + str(i) + ".jpg", image)
+                misc.imsave("results/{}epoch{}num.jpg".format(epoch, i), image)
 
-training(1)
+
+training(10, 100)
