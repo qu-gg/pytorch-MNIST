@@ -30,7 +30,9 @@ class Generator(nn.Module):
         self.conv1 = nn.ConvTranspose2d(100, 128, kernel_size=5, stride=2)
         self.bn1 = nn.BatchNorm2d(128)
         self.conv2 = nn.ConvTranspose2d(128, 56, kernel_size=5, stride=2)
+        self.bn2 = nn.BatchNorm2d(56)
         self.conv3 = nn.ConvTranspose2d(56, 28, kernel_size=4, stride=2)
+        self.bn3 = nn.BatchNorm2d(28)
         self.conv4 = nn.ConvTranspose2d(28, 1, kernel_size=1, stride=1)
 
     def forward(self, x):
@@ -40,10 +42,10 @@ class Generator(nn.Module):
         :return: Matrix of [-1, 1, 28, 28]
         """
         x = x.view(-1, 100, 1, 1)
-        x = self.bn1(self.conv1(x))
-        x = self.conv2(x)
-        x = f.elu(self.conv3(x))
-        x = f.elu(self.conv4(x))
+        x = f.elu(self.bn1(self.conv1(x)))
+        x = f.elu(self.bn2(self.conv2(x)))
+        x = f.elu(self.bn3(self.conv3(x)))
+        x = self.conv4(x)
         x = torch.tanh(x)
         return x
 
@@ -68,7 +70,7 @@ def get_batch(gen, num):
     :param num: Number of images in batch
     :return: Tensor of generated images
     """
-    classes = [np.random.uniform(0.8, 1.2) for _ in range(num)]
+    classes = [np.random.uniform(0.8, 1.0) for _ in range(num)]
 
     images = []
     for _ in range(num):
@@ -84,12 +86,12 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         self.conv1 = nn.Conv2d(1, 128, kernel_size=6, stride=2)
-        self.conv2 = nn.Conv2d(128, 56, kernel_size=5, stride=2)
-        self.conv3 = nn.Conv2d(56, 100, kernel_size=4, stride=2)
+        self.conv2 = nn.Conv2d(128, 128, kernel_size=5, stride=2)
+        self.conv3 = nn.Conv2d(128, 100, kernel_size=4, stride=2)
         self.fc = nn.Linear(100, 1)
 
     def forward(self, x):
-        x = self.conv1(x)
+        x = f.elu(self.conv1(x))
         x = f.elu(self.conv2(x))
         x = f.elu(self.conv3(x))
         x = x.view(-1, 100)
@@ -114,9 +116,11 @@ def training(num_epochs, num_steps):
     :return: None
     """
     for epoch in range(num_epochs):
+        print("\nEpoch: {}".format(epoch))
         for i in range(num_steps):
             # Zero grad
             dis_optim.zero_grad()
+            gen_optim.zero_grad()
 
             # Train on real
             images, _ = next(iter(trainloader))
@@ -131,13 +135,12 @@ def training(num_epochs, num_steps):
             dis_fake_loss = cross_entropy(dis_fake, gen_labels)
             dis_fake_loss.backward()
 
-            if dis_fake_loss.detach().numpy() > .5:
-                dis_optim.step()
+            dis_optim.step()
 
             if i % 10 == 0:
                 print("Discrim loss on {}: {}".format(i, dis_fake_loss.detach().numpy()))
 
-        for i in range(num_steps*2):
+        for i in range(num_steps):
             # Zero grad
             gen_optim.zero_grad()
 
@@ -149,9 +152,12 @@ def training(num_epochs, num_steps):
 
             if i % 10 == 0:
                 print("Genera Loss on {}: {}".format(i, gen_loss.detach().numpy()))
-                noise = torch.randn(1, 100)
-                image = generate_img(gen, noise, True)
-                misc.imsave("results/{}epoch{}num.jpg".format(epoch, i), image)
+                img = generate_img(gen, torch.randn(1, 100), True)
+                for _ in range(25):
+                    noise = torch.randn(1, 100)
+                    image = generate_img(gen, noise, True)
+                    img = np.concatenate((img, image), axis=1)
+                misc.imsave("results/{}epoch{}num.jpg".format(epoch, i), img)
 
 
-training(10, 50)
+training(100, 50)
