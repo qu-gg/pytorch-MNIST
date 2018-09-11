@@ -6,18 +6,34 @@ import torchvision
 import torchvision.transforms as transforms
 from scipy import misc
 import numpy as np
-import random
 
 # Datasets
 trainset = torchvision.datasets.MNIST(root="./data", train=True,
                                       download=True, transform=transforms.ToTensor())
 
-testset = torchvision.datasets.MNIST(root="./data", train=False,
-                                     download=True, transform=transforms.ToTensor())
-
 # Loaders for Datasets
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True)
-testloader = torch.utils.data.DataLoader(testset, batch_size=64)
+
+
+def mnist_batch(num_wanted, batch_size):
+    """
+    Function to generate a batch of mnist pictures that are of a specific number
+    This is to help train the GAN in a more focused way
+    :param num_wanted: The digit to get images of
+    :param batch_size: How many images in a batch
+    :return: Batch of MNIST images of a specific digit
+    """
+    images = []
+    while len(images) < batch_size:
+        mnist, labels = next(iter(trainloader))
+        for i in range(len(labels)):
+            if len(images) >= batch_size:
+                break
+            if labels[i] == num_wanted:
+                images.append(mnist[i])
+    tensor = torch.cat(images)
+    tensor = tensor.view(batch_size, 1, 28, 28)
+    return tensor
 
 
 class Generator(nn.Module):
@@ -42,9 +58,9 @@ class Generator(nn.Module):
         :return: Matrix of [-1, 1, 28, 28]
         """
         x = x.view(-1, 100, 1, 1)
-        x = f.elu(self.bn1(self.conv1(x)))
-        x = f.elu(self.bn2(self.conv2(x)))
-        x = f.elu(self.bn3(self.conv3(x)))
+        x = self.bn1(self.conv1(x))
+        x = f.leaky_relu(self.bn2(self.conv2(x)))
+        x = f.leaky_relu(self.bn3(self.conv3(x)))
         x = self.conv4(x)
         x = torch.tanh(x)
         return x
@@ -70,7 +86,7 @@ def get_batch(gen, num):
     :param num: Number of images in batch
     :return: Tensor of generated images
     """
-    classes = [np.random.uniform(0.8, 1.0) for _ in range(num)]
+    classes = [np.random.uniform(0.9, 1.0) for _ in range(num)]
 
     images = []
     for _ in range(num):
@@ -91,14 +107,15 @@ class Discriminator(nn.Module):
         self.fc = nn.Linear(100, 1)
 
     def forward(self, x):
-        x = f.elu(self.conv1(x))
-        x = f.elu(self.conv2(x))
-        x = f.elu(self.conv3(x))
+        x = self.conv1(x)
+        x = f.leaky_relu(self.conv2(x))
+        x = f.leaky_relu(self.conv3(x))
         x = x.view(-1, 100)
         x = torch.sigmoid(self.fc(x))
         return x
 
 
+# Initialization for the Generator and Discriminator
 gen = Generator()
 discrim = Discriminator()
 
@@ -120,11 +137,10 @@ def training(num_epochs, num_steps):
         for i in range(num_steps):
             # Zero grad
             dis_optim.zero_grad()
-            gen_optim.zero_grad()
 
             # Train on real
-            images, _ = next(iter(trainloader))
-            labels = torch.Tensor([np.random.uniform(0.0, 0.2) for _ in range(64)])
+            images = mnist_batch(3, 64)
+            labels = torch.Tensor([np.random.uniform(0.0, 0.1) for _ in range(64)])
             dis_real = discrim(images)
             dis_real_loss = cross_entropy(dis_real, labels)
             dis_real_loss.backward()
