@@ -166,15 +166,15 @@ def training(num_epochs, num_steps):
             gen_loss.backward()
             gen_optim.step()
 
-            if i % num_steps//2 == 0 or i+1 == num_steps:
+            if i % 10 == 0 or i + 1 == num_steps:
                 print("Genera Loss on {}: {}".format(i, gen_loss.detach().numpy()))
                 img = generate_img(gen, torch.randn(1, 100), True)
                 for _ in range(10):
                     noise = torch.randn(1, 100)
                     image = generate_img(gen, noise, True)
                     img = np.concatenate((img, image), axis=1)
-                misc.imsave("results/{}epoch{}num.jpg".format(epoch, i), img)
+                misc.imsave("output/{}epoch{}num.jpg".format(epoch, i), img)
 
 
-train = input("Input num runs per epoch: ")
+train = int(input("Input num runs per epoch: "))
 training(100, train)
