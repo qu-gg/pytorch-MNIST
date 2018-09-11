@@ -139,7 +139,7 @@ def training(num_epochs, num_steps):
             dis_optim.zero_grad()
 
             # Train on real
-            images = mnist_batch(3, 64)
+            images = mnist_batch(2, 64)
             labels = torch.Tensor([np.random.uniform(0.0, 0.1) for _ in range(64)])
             dis_real = discrim(images)
             dis_real_loss = cross_entropy(dis_real, labels)
@@ -156,7 +156,7 @@ def training(num_epochs, num_steps):
             if i % 10 == 0:
                 print("Discrim loss on {}: {}".format(i, dis_fake_loss.detach().numpy()))
 
-        for i in range(num_steps):
+        for i in range(num_steps*2):
             # Zero grad
             gen_optim.zero_grad()
 
@@ -166,14 +166,15 @@ def training(num_epochs, num_steps):
             gen_loss.backward()
             gen_optim.step()
 
-            if i % 10 == 0:
+            if i % num_steps//2 == 0 or i+1 == num_steps:
                 print("Genera Loss on {}: {}".format(i, gen_loss.detach().numpy()))
                 img = generate_img(gen, torch.randn(1, 100), True)
-                for _ in range(25):
+                for _ in range(10):
                     noise = torch.randn(1, 100)
                     image = generate_img(gen, noise, True)
                     img = np.concatenate((img, image), axis=1)
                 misc.imsave("results/{}epoch{}num.jpg".format(epoch, i), img)
 
 
-training(100, 50)
+train = input("Input num runs per epoch: ")
+training(100, train)
