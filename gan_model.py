@@ -139,7 +139,7 @@ def training(num_epochs, num_steps):
             dis_optim.zero_grad()
 
             # Train on real
-            images = mnist_batch(2, 64)
+            images = mnist_batch(9, 64)
             labels = torch.Tensor([np.random.uniform(0.0, 0.1) for _ in range(64)])
             dis_real = discrim(images)
             dis_real_loss = cross_entropy(dis_real, labels)
@@ -166,7 +166,7 @@ def training(num_epochs, num_steps):
             gen_loss.backward()
             gen_optim.step()
 
-            if i % 10 == 0 or i + 1 == num_steps:
+            if i % 10 == 0 or i + 1 == num_steps*2:
                 print("Genera Loss on {}: {}".format(i, gen_loss.detach().numpy()))
                 img = generate_img(gen, torch.randn(1, 100), True)
                 for _ in range(10):

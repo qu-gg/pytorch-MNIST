@@ -164,4 +164,4 @@ def use_net():
             print("Your digit is", pred)
 
 
-train(5)
+train(2)
