@@ -1,6 +1,6 @@
 # PyTorch MNIST Implementations
 <h3>Implementation of varied MNIST architectures to test PyTorch</h3>
-<hr width="50%">
+<hr width="65%">
 <ul>
 <li>fc_model.py: A simple 3-layer network used to test the basics of loading the MNIST dataset and executing a training loop</li>
 <li>conv_model.py: Similar in structure to the FC model, just with the addition of convolutional layers and the ability to use the network for custom predictions.</li>
@@ -21,7 +21,7 @@
 <img src="https://raw.githubusercontent.com/qu-gg/pytorch-MNIST/master/results/9/66epoch17num.jpg"></img>
 
 <h5>Optimizer, LR, Loss:</h5>
-<hr width="25%">
+<hr width="15%">
 
 <p>Some other potential optimizations is to adjust the training cycle and learning rates of the model. Because I was running on a slower set-up, I was reluctant to try a lower learning rates and larger batch sizes - though I feel like tuning these could provide for better results.</p>
  
