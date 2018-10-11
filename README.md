@@ -21,10 +21,11 @@
 <img src="https://raw.githubusercontent.com/qu-gg/pytorch-MNIST/master/results/9/66epoch17num.jpg"></img>
 
 <h5>Optimizer, LR, Loss:</h5>
-<hr width="15%">
 
 <p>Some other potential optimizations is to adjust the training cycle and learning rates of the model. Because I was running on a slower set-up, I was reluctant to try a lower learning rates and larger batch sizes - though I feel like tuning these could provide for better results.</p>
  
 <h4> Take-aways </h4>
+<hr width="15%">
+
 <p>One of the biggest takeaways from this was that in the context of using transpose convolutions to generate images of a specified size, it is far easier to start with a randomized latent vector that that's square root is multiple of the size you are trying to reach. Using large and varying kernel sizes has the potential to mix distinct spatial information, leading to blurry results.</p>
 
