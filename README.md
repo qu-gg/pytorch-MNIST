@@ -21,9 +21,11 @@
 <img src="https://raw.githubusercontent.com/qu-gg/pytorch-MNIST/master/results/9/66epoch17num.jpg"></img>
 
 <h5>Optimizer, LR, Loss:</h5>
-
 <p>Some other potential optimizations is to adjust the training cycle and learning rates of the model. Because I was running on a slower set-up, I was reluctant to try a lower learning rates and larger batch sizes - though I feel like tuning these could provide for better results.</p>
- 
+
+<h5>Mode Collapse</h5>
+<p>One incapability of this GAN was to represent the whole distribution of the MNIST dataset as mode collapse was an issue during training. More tuning and training methods needs to be done in order to extend the capabilities of the single network. While the results did represent the distribution provided, it's applicability is low in terms of a wide distribution to represent.</p>
+
 <h4> Take-aways </h4>
 <hr width="15%">
 
