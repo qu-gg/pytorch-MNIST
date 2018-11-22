@@ -17,8 +17,8 @@
 <p>I believe this resulted in a lack of fine edges and detail in the generator due to the kernels providing too much information per convolution, distorting the distinct boundaries betweeen digit and whitespace.</p>
 
 <p>Results from training on MNIST 8's and 9's:<p>
-<img src="https://raw.githubusercontent.com/qu-gg/pytorch-MNIST/master/results/8/77epoch0num.jpg"></img></br>
-<img src="https://raw.githubusercontent.com/qu-gg/pytorch-MNIST/master/results/9/66epoch17num.jpg"></img>
+<img src="https://raw.githubusercontent.com/qu-gg/pytorch-MNIST/master/results/8/77epoch0num.jpg">
+<img src="https://raw.githubusercontent.com/qu-gg/pytorch-MNIST/master/results/9/66epoch17num.jpg">
 
 <h5>Optimizer, LR, Loss:</h5>
 <p>Some other potential optimizations is to adjust the training cycle and learning rates of the model. Because I was running on a slower set-up, I was reluctant to try a lower learning rates and larger batch sizes - though I feel like tuning these could provide for better results.</p>
