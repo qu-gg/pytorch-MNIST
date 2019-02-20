@@ -4,7 +4,7 @@ import torch.nn.functional as f
 import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
-from scipy import misc
+import imageio
 import numpy as np
 
 # Datasets
@@ -173,7 +173,7 @@ def training(num_epochs, num_steps):
                     noise = torch.randn(1, 100)
                     image = generate_img(gen, noise, True)
                     img = np.concatenate((img, image), axis=1)
-                misc.imsave("output/{}epoch{}num.jpg".format(epoch, i), img)
+                imageio.imsave("output/{}epoch{}num.jpg".format(epoch, i), img)
 
 
 train = int(input("Input num runs per epoch: "))
