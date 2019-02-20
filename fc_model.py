@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as f
 import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
@@ -17,7 +18,6 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=64)
 
 
 class Net(nn.Module):
-
     def __init__(self):
         """
         Initialization for the network, defining the hidden layers of the model
@@ -36,9 +36,9 @@ class Net(nn.Module):
         :param x: input to the network
         :return: output of the network
         """
-        x = torch.sigmoid(self.fc1(x))
-        x = torch.sigmoid(self.fc2(x))
-        x = torch.sigmoid(self.fc3(x))
+        x = f.relu(self.fc1(x))
+        x = f.relu(self.fc2(x))
+        x = f.sigmoid(self.fc3(x))
         output = self.final(x)
         return output
 
@@ -72,7 +72,6 @@ def train(num_epoch):
             # print results
             if i % 100 == 0:
                 print("Loss at iter ", i, ": ", loss.data)
-
     print("Finished training")
 
 
@@ -95,7 +94,19 @@ def test_net():
             correct += (predicted == labels).sum().item()
 
     print("Accuracy of the network on the test set: ", 100 * correct / total, "%")
+    save_net(net)
 
 
-train(1)
+def save_net(model):
+    """
+    Function to save the model at any current stage
+    :param model: model to save
+    :return: None
+    """
+    print("Saving net...", end="")
+    torch.save(model, "./fc_model.pt")
+    print("...complete!")
+
+
+train(2)
 test_net()

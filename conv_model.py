@@ -156,4 +156,5 @@ def use_net(model):
             print("Your digit is", pred)
 
 
-use_net("conv_model.pt")
+train(3, 64)
+test_net()
