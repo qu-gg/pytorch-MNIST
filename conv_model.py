@@ -4,15 +4,14 @@ import torch.nn.functional as f
 import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
-from scipy import misc
+import imageio
+import numpy as np
 
 
 # Datasets
-trainset = torchvision.datasets.MNIST(root="./data", train=True,
-                                      download=True, transform=transforms.ToTensor())
+trainset = torchvision.datasets.MNIST(root="./data", train=True, download=True, transform=transforms.ToTensor())
 
-testset = torchvision.datasets.MNIST(root="./data", train=False,
-                                     download=True, transform=transforms.ToTensor())
+testset = torchvision.datasets.MNIST(root="./data", train=False, download=True, transform=transforms.ToTensor())
 
 # Loaders for Datasets
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True)
@@ -42,12 +41,16 @@ class Net(nn.Module):
         :param x: input to the network
         :return: output of the network
         """
-        x = self.pool(f.relu(self.conv1(x)))
-        x = self.pool(f.relu(self.conv2(x)))
+        x = self.pool(f.leaky_relu(self.conv1(x)))
+        x = self.pool(f.leaky_relu(self.conv2(x)))
         x = x.view(-1, 256)
-        x = f.relu(self.fc1(x))
+        x = f.leaky_relu(self.fc1(x))
         output = self.fc2(x)
         return output
+
+    def set_batch(self, num):
+        # Setter for the batch size
+        self.batch_size = num
 
 
 net = Net()                                         # Assigning the net to a local variable
@@ -56,13 +59,13 @@ cross_entropy = nn.CrossEntropyLoss()               # Standard Cross Entropy los
 optimizer = optim.Adam(net.parameters(), lr=.001)   # Adam optimizer works well with a lower learning rate
 
 
-def train(num_epoch):
+def train(num_epoch, batch_size):
     """
     Function that handles the training loop of the network
     :param num_epoch: number of times to loop through the dataset
     :return: None
     """
-    set_batch(64)
+    net.set_batch(batch_size)
     for epoch in range(num_epoch):
         for i, data in enumerate(trainloader, 0):
             images, labels = data
@@ -79,7 +82,6 @@ def train(num_epoch):
             # print results
             if i % 100 == 0:
                 print("Loss at iter", i, "in epoch", epoch, ": ", loss.data)
-
     print("Finished training")
 
 
@@ -89,13 +91,11 @@ def test_net():
     The test images are images the network has never seen before
     :return: None
     """
-    total = 0
-    correct = 0
-    set_batch(64)
+    total = correct = 0
+    net.set_batch(64)
     with torch.no_grad():
         for data in testloader:
             images, labels = data
-            print(images[0])
             pred = net(images)
             _, predicted = torch.max(pred, 1)
             total += labels.size(0)
@@ -112,26 +112,17 @@ def save_net(model):
     :return: None
     """
     print("Saving net...", end="")
-    torch.save(model, "./model")
+    torch.save(model, "./conv_model.pt")
     print("...complete!")
 
 
-def set_batch(num):
-    """
-    Function to set the batch size and layer sizes
-    :param num: Batch size
-    :return: None
-    """
-    setattr(net, "batch_size", num)
-
-
-def use_net():
+def use_net(model):
     """
     Function that takes an input file, preprocesses the data, and feeds it into the
     network for a prediction
     :return: None
     """
-    net = torch.load("./model")
+    net = torch.load(model)
     with torch.no_grad():
         while True:
             # get image path
@@ -140,7 +131,7 @@ def use_net():
                 break
 
             # create the image array and size it as a Torch tensor
-            image = misc.imread(path)
+            image = imageio.imread(path)
             image_rgb_raw = [[] for _ in range(28)]
 
             for row_index in range(len(image)):
@@ -155,13 +146,14 @@ def use_net():
             img = img.view(1, 1, 28, 28)
 
             # use the net
-            set_batch(1)
+            net.set_batch(1)
             output = net(img)
-            print(output)
+            output = output.detach().numpy()
 
             # print prediction
-            pred = torch.argmax(output)
+            pred = np.argmax(output)
+            print(output)
             print("Your digit is", pred)
 
 
-train(2)
+use_net("conv_model.pt")
